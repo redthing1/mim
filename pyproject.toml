@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "mim"
+version = "0.14.0"
+description = "well integrated mini machines with rootless podman"
+authors = ["redthing1 <redthing1@alt.icu>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.13"
+typer = "^0.9.0"
+sh = "^2.0.4"
+minlog = "^0.4.0"
+single-source = "^0.3.0"
+
+[tool.poetry.group.dev.dependencies]
+pyinstaller = "^5.13.0"
+poethepoet = "^0.21.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+mim = "mim.__main__:main"
+
+[tool.poe.tasks]
+build_pyinstaller_bundle = "poetry run pyinstaller entry.py --noconfirm -n mim --distpath ./bundle_dist --clean"
