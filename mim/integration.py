@@ -55,7 +55,7 @@ def get_os_integration_home_env() -> str:
     else:
         raise NotImplementedError(f"unknown os: {os.name}")
 
-    home_env = f"HOME={container_home_dir}"
+    home_env = f"HOST_HOME={container_home_dir}"
     return home_env
 
 
