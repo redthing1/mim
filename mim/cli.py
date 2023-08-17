@@ -17,6 +17,7 @@ from .containers import (
     container_is_running,
     container_is_mim,
 )
+from .integration import get_os_integration_mounts
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -115,13 +116,22 @@ def create(
         logger.error(f"container [{container_name}] already exists")
         raise typer.Exit(1)
 
-    logger.info(f"creating mim container [{container_name}] from image [{image_name}]")
-    create_cmd = PODMAN.bake(
-        "create",
+    integration_mounts = get_os_integration_mounts()
+
+    podman_create_opts = [
         "--name",
         container_name,
         "--label",
         f"mim=1",
+    ]
+
+    for mount in integration_mounts:
+        podman_create_opts.extend(["-v", mount])
+
+    logger.info(f"creating mim container [{container_name}] from image [{image_name}]")
+    create_cmd = PODMAN.bake(
+        "create",
+        *podman_create_opts,
         image_name,
     )
 
@@ -142,6 +152,12 @@ def destroy(
         "--container-name",
         help="name of the container to destroy.",
     ),
+    force: bool = typer.Option(
+        False,
+        "-f",
+        "--force",
+        help="force destroy the container.",
+    ),
 ):
     if not container_exists(container_name):
         logger.error(f"container [{container_name}] does not exist")
@@ -150,6 +166,24 @@ def destroy(
     if not container_is_mim(container_name):
         logger.error(f"container [{container_name}] is not a mim container")
         raise typer.Exit(1)
+
+    if container_is_running(container_name):
+        if force:
+            stop_cmd = PODMAN.bake(
+                "stop",
+                "-t",
+                "1",
+                container_name,
+            )
+            logger.debug(f"running command: {stop_cmd}")
+            try:
+                stop_proc = stop_cmd()
+            except sh.ErrorReturnCode as e:
+                logger.error(f"stop failed with error code {e.exit_code}")
+                raise typer.Exit(1)
+        else:
+            logger.error(f"container [{container_name}] is running")
+            raise typer.Exit(1)
 
     logger.info(f"destroying mim container [{container_name}]")
     destroy_cmd = PODMAN.bake(

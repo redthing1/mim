@@ -7,7 +7,7 @@ MOUNT_BASE = "/mim"
 
 MACOS_MOUNTS = [
     f"/Users:{MOUNT_BASE}/Users",
-    f"/Volumes:{MOUNT_BASE}/Volumes",
+    # f"/Volumes:{MOUNT_BASE}/Volumes",
 ]
 
 LINUX_MOUNTS = [
