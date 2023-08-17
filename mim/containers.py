@@ -45,15 +45,18 @@ def container_is_mim(container_name):
                 return True
     return False
 
+
 def get_images():
     images_cmd = PODMAN.bake("images", "--format", "json")
     podman_images_json = images_cmd()
     podman_images = json.loads(podman_images_json)
     return podman_images
 
+
 def image_exists(image_name):
-    podman_images = get_images()
-    for image in podman_images:
-        if image_name in image["Names"]:
-            return True
-    return False
+    image_exists_cmd = PODMAN.bake("image", "exists", image_name)
+    try:
+        image_exists_cmd()
+        return True
+    except sh.ErrorReturnCode:
+        return False
