@@ -9,8 +9,12 @@ FORMAT_PODMAN_OUTPUT = {
 }
 
 
-def get_containers():
-    ps_cmd = PODMAN.bake("ps", "-a", "--format", "json")
+def get_containers(only_mim=False):
+    ps_args = ["-a", "--format", "json"]
+    if only_mim:
+        ps_args.append("--filter")
+        ps_args.append("label=mim=1")
+    ps_cmd = PODMAN.bake("ps", *ps_args)
     podman_containers_json = ps_cmd()
     podman_containers = json.loads(podman_containers_json)
     return podman_containers

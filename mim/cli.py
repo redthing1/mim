@@ -222,3 +222,26 @@ def shell(
     except sh.ErrorReturnCode as e:
         logger.error(f"shell failed with error code {e.exit_code}")
         raise typer.Exit(1)
+
+
+@app.command(help="list all mim containers")
+def list():
+    logger.info("listing all mim containers")
+
+    containers = get_containers(only_mim=True)
+    if len(containers) == 0:
+        logger.info("no mim containers found")
+        return
+
+    logger.info(f"mim containers[{len(containers)}]:")
+    for container in containers:
+        # logger.info(f"container [{container}]")
+        container_name = container["Names"][0]
+        container_state = container["State"]
+        container_is_running = container["State"] == "running"
+        # logger.info(f"container [{container_name}]")
+        # logger.info(f"  running: {container_is_running}")
+
+        logger.info(
+            f"  [{container_name}] ({container_state})",
+        )
