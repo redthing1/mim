@@ -16,6 +16,8 @@ from .containers import (
     container_exists,
     container_is_running,
     container_is_mim,
+    get_images,
+    image_exists,
 )
 from .integration import get_os_integration_mounts
 
@@ -114,6 +116,11 @@ def create(
 
     if container_exists(container_name):
         logger.error(f"container [{container_name}] already exists")
+        raise typer.Exit(1)
+
+    # ensuare an image exists
+    if not image_exists(image_name):
+        logger.error(f"image [{image_name}] does not exist")
         raise typer.Exit(1)
 
     integration_mounts = get_os_integration_mounts()

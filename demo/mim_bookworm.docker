@@ -2,7 +2,7 @@ FROM debian:bookworm-slim
 
 # install dependencies
 RUN apt update && apt install -y \
-  bash curl wget make git build-essential gcc-x86-64-linux-gnu libc6-dev libc6-dev-amd64-cross libc6-dev-arm64-cross \
+  sudo bash curl wget make git build-essential gcc-x86-64-linux-gnu libc6-dev libc6-dev-amd64-cross libc6-dev-arm64-cross \
   clang clang-tools lld llvm-dev libc++-dev libc++abi-dev \
   python3 python-is-python3 \
   && rm -rf /var/lib/apt/lists/* && apt autoremove -y && apt clean
