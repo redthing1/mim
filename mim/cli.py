@@ -1,5 +1,6 @@
 import os
 import time
+import shutil
 from typing import List, Optional, Any, Dict
 
 import typer
@@ -19,7 +20,11 @@ from .containers import (
     get_images,
     image_exists,
 )
-from .integration import get_os_integration_mounts
+from .integration import (
+    get_os_integration_mounts,
+    get_app_data_dir,
+    get_container_integration_mounts,
+)
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -31,6 +36,8 @@ app = typer.Typer(
     context_settings=CONTEXT_SETTINGS,
     pretty_exceptions_show_locals=False,
 )
+
+DATA_DIR = get_app_data_dir(APP_NAME)
 
 
 def version_callback(value: bool):
@@ -123,7 +130,9 @@ def create(
         logger.error(f"image [{image_name}] does not exist")
         raise typer.Exit(1)
 
-    integration_mounts = get_os_integration_mounts()
+    container_data_dir = os.path.join(DATA_DIR, container_name)
+    logger.info(f"creating data directory [{container_data_dir}]")
+    os.makedirs(container_data_dir, exist_ok=True)
 
     podman_create_opts = [
         "--name",
@@ -132,7 +141,17 @@ def create(
         f"mim=1",
     ]
 
-    for mount in integration_mounts:
+    for mount in get_os_integration_mounts():
+        podman_create_opts.extend(["-v", mount])
+
+    for mount in get_container_integration_mounts(container_data_dir):
+        mount_source, mount_target = mount.split(":")
+        if not os.path.exists(mount_source):
+            logger.warning(
+                f"integration mount source [{mount_source}] does not exist, skipping"
+            )
+            continue
+
         podman_create_opts.extend(["-v", mount])
 
     logger.info(f"creating mim container [{container_name}] from image [{image_name}]")
@@ -191,6 +210,13 @@ def destroy(
         else:
             logger.error(f"container [{container_name}] is running")
             raise typer.Exit(1)
+
+    logger.info(f"destroying data directory for container [{container_name}]")
+    container_data_dir = os.path.join(DATA_DIR, container_name)
+    try:
+        shutil.rmtree(container_data_dir)
+    except FileNotFoundError:
+        logger.error(f"failed to destroy data directory [{container_data_dir}]")
 
     logger.info(f"destroying mim container [{container_name}]")
     destroy_cmd = PODMAN.bake(
