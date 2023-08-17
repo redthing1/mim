@@ -23,5 +23,8 @@ RUN apt update && apt install -y \
   && sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="cypher"/g' /root/.zshrc \
   && echo "Fancy shell installed"
 
-# set up main to run shell
-CMD ["/bin/zsh", "-l"]
+# # set up main to run shell
+# CMD ["/bin/zsh", "-l"]
+
+# wait
+CMD ["tail", "-f", "/dev/null"]

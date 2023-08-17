@@ -9,6 +9,15 @@ from minlog import logger, Verbosity
 from .util import set_option, get_option
 from . import __VERSION__
 
+from .containers import (
+    PODMAN,
+    FORMAT_PODMAN_OUTPUT,
+    get_containers,
+    container_exists,
+    container_is_running,
+    container_is_mim,
+)
+
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 APP_NAME = "mim"
@@ -19,8 +28,6 @@ app = typer.Typer(
     context_settings=CONTEXT_SETTINGS,
     pretty_exceptions_show_locals=False,
 )
-
-PODMAN = sh.Command("podman")
 
 
 def version_callback(value: bool):
@@ -73,9 +80,8 @@ def build(
         dockerfile,
         "-t",
         image_name,
-        context_dir,  # output formatting
-        _out=lambda line: logger.error(f"  {line}", end=""),
-        _err=lambda line: logger.error(f"  {line}", end=""),
+        context_dir,
+        **FORMAT_PODMAN_OUTPUT,
     )
     logger.debug(f"running command: {build_cmd}")
     try:
@@ -87,8 +93,8 @@ def build(
     logger.info(f"build complete, image [{image_name}] created")
 
 
-@app.command(help="run a container from an image", no_args_is_help=True)
-def run(
+@app.command(help="create a container from an image", no_args_is_help=True)
+def create(
     image_name: str = typer.Option(
         ...,
         "-n",
@@ -101,35 +107,64 @@ def run(
         "--container-name",
         help="name to give the container.",
     ),
-    onetime: bool = typer.Option(
-        False,
-        "-1",
-        "--onetime",
-        help="remove the container after it exits.",
-    ),
 ):
     if container_name is None:
         container_name = image_name
 
+    if container_exists(container_name):
+        logger.error(f"container [{container_name}] already exists")
+        raise typer.Exit(1)
+
     logger.info(f"creating mim container [{container_name}] from image [{image_name}]")
-    run_cmd = PODMAN.bake(
-        "run",
+    create_cmd = PODMAN.bake(
+        "create",
         "--name",
         container_name,
-        "--rm" if onetime else "-i",
-        "-it",
+        "--label",
+        f"mim=1",
         image_name,
     )
 
-    logger.debug(f"running command: {run_cmd}")
+    logger.debug(f"running command: {create_cmd}")
     try:
-        run_proc = run_cmd(_fg=True)
+        create_cmd(**FORMAT_PODMAN_OUTPUT)
+        logger.info(f"container [{container_name}] created")
     except sh.ErrorReturnCode as e:
         logger.error(f"run failed with error code {e.exit_code}")
         raise typer.Exit(1)
 
-    if onetime:
-        logger.info(f"container [{container_name}] removed")
+
+@app.command(help="destroy a container", no_args_is_help=True)
+def destroy(
+    container_name: str = typer.Option(
+        ...,
+        "-c",
+        "--container-name",
+        help="name of the container to destroy.",
+    ),
+):
+    if not container_exists(container_name):
+        logger.error(f"container [{container_name}] does not exist")
+        raise typer.Exit(1)
+
+    if not container_is_mim(container_name):
+        logger.error(f"container [{container_name}] is not a mim container")
+        raise typer.Exit(1)
+
+    logger.info(f"destroying mim container [{container_name}]")
+    destroy_cmd = PODMAN.bake(
+        "rm",
+        container_name,
+    )
+
+    logger.debug(f"running command: {destroy_cmd}")
+    try:
+        destroy_proc = destroy_cmd()
+    except sh.ErrorReturnCode as e:
+        logger.error(f"destroy failed with error code {e.exit_code}")
+        raise typer.Exit(1)
+
+    logger.info(f"container [{container_name}] destroyed")
 
 
 @app.command(help="get a shell in a running container", no_args_is_help=True)
@@ -147,21 +182,30 @@ def shell(
         help="shell to run in the container.",
     ),
 ):
-    # see if container is in podman ps
-    podman_ps_cmd = PODMAN.bake(
-        "ps",
-        "--format",
-        "{{.Names}}",
-    )
-    logger.debug(f"running command: {podman_ps_cmd}")
-    try:
-        podman_ps_proc = podman_ps_cmd()
-    except sh.ErrorReturnCode as e:
-        logger.error(f"podman ps failed with error code {e.exit_code}")
+    if not container_exists(container_name):
+        logger.error(f"container [{container_name}] does not exist")
         raise typer.Exit(1)
 
-    if container_name not in podman_ps_proc.split("\n"):
-        logger.error(f"container [{container_name}] not found")
+    if not container_is_mim(container_name):
+        logger.error(f"container [{container_name}] is not a mim container")
+        raise typer.Exit(1)
+
+    if not container_is_running(container_name):
+        logger.info(f"container [{container_name}] is not running, starting it")
+        start_cmd = PODMAN.bake(
+            "start",
+            container_name,
+        )
+
+        logger.debug(f"running command: {start_cmd}")
+        try:
+            start_proc = start_cmd()
+        except sh.ErrorReturnCode as e:
+            logger.error(f"start failed with error code {e.exit_code}")
+            raise typer.Exit(1)
+
+    if not container_is_running(container_name):
+        logger.error(f"container [{container_name}] could not be started")
         raise typer.Exit(1)
 
     logger.info(f"getting shell in container [{container_name}]")
