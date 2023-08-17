@@ -22,8 +22,9 @@ from .containers import (
 )
 from .integration import (
     get_os_integration_mounts,
-    get_app_data_dir,
     get_container_integration_mounts,
+    get_os_integration_home_env,
+    get_app_data_dir,
 )
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -153,6 +154,9 @@ def create(
             continue
 
         podman_create_opts.extend(["-v", mount])
+
+    integration_home_env = get_os_integration_home_env()
+    podman_create_opts.extend(["-e", integration_home_env])
 
     logger.info(f"creating mim container [{container_name}] from image [{image_name}]")
     create_cmd = PODMAN.bake(

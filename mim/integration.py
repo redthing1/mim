@@ -38,6 +38,27 @@ def get_os_integration_mounts() -> List[str]:
         raise NotImplementedError(f"unknown os: {os.name}")
 
 
+def get_os_integration_home_env() -> str:
+    home_dir = get_home_dir()
+    current_user = get_current_user()
+    container_home_dir = None
+
+    if os.name == "posix":
+        if os.uname().sysname == "Darwin":
+            container_home_dir = f"{MOUNT_BASE}/Users/{current_user}"
+        elif os.uname().sysname == "Linux":
+            container_home_dir = f"{MOUNT_BASE}/home/{current_user}"
+        else:
+            raise NotImplementedError(f"unknown posix system: {os.uname().sysname}")
+    elif os.name == "nt":
+        container_home_dir = f"{MOUNT_BASE}/Users/{current_user}"
+    else:
+        raise NotImplementedError(f"unknown os: {os.name}")
+
+    home_env = f"HOME={container_home_dir}"
+    return home_env
+
+
 def get_container_integration_mounts(data_dir) -> List[str]:
     return [x.replace("$", data_dir) for x in CONTAINER_INTEGRATION_MOUNTS]
 
@@ -55,5 +76,33 @@ def get_app_data_dir(app_name: str) -> str:
             raise NotImplementedError(f"unknown posix system: {os.uname().sysname}")
     elif os.name == "nt":
         return os.path.join(os.environ["APPDATA"], app_name)
+    else:
+        raise NotImplementedError(f"unknown os: {os.name}")
+
+
+def get_home_dir() -> str:
+    if os.name == "posix":
+        if os.uname().sysname == "Darwin":
+            return os.environ["HOME"]
+        elif os.uname().sysname == "Linux":
+            return os.environ["HOME"]
+        else:
+            raise NotImplementedError(f"unknown posix system: {os.uname().sysname}")
+    elif os.name == "nt":
+        return os.environ["USERPROFILE"]
+    else:
+        raise NotImplementedError(f"unknown os: {os.name}")
+
+
+def get_current_user() -> str:
+    if os.name == "posix":
+        if os.uname().sysname == "Darwin":
+            return os.environ["USER"]
+        elif os.uname().sysname == "Linux":
+            return os.environ["USER"]
+        else:
+            raise NotImplementedError(f"unknown posix system: {os.uname().sysname}")
+    elif os.name == "nt":
+        return os.environ["USERNAME"]
     else:
         raise NotImplementedError(f"unknown os: {os.name}")
