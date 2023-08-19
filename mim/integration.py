@@ -23,6 +23,7 @@ CONTAINER_INTEGRATION_MOUNTS = [
     # "$/.bash_history:/root/.bash_history",
 ]
 
+CONTAINER_HOME_DIR = "/root"
 
 def get_os_integration_mounts() -> List[str]:
     if os.name == "posix":

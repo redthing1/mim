@@ -24,7 +24,9 @@ from .integration import (
     get_os_integration_mounts,
     get_container_integration_mounts,
     get_os_integration_home_env,
+    get_home_dir,
     get_app_data_dir,
+    CONTAINER_HOME_DIR,
 )
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -118,6 +120,12 @@ def create(
         "--container-name",
         help="name to give the container.",
     ),
+    home_shares: List[str] = typer.Option(
+        [],
+        "-H",
+        "--home-share",
+        help="path to a directory to share with the container.",
+    ),
 ):
     if container_name is None:
         container_name = image_name
@@ -154,6 +162,28 @@ def create(
             continue
 
         podman_create_opts.extend(["-v", mount])
+
+    user_home_dir = get_home_dir()
+    for home_share in home_shares:
+        # normalize the home share path
+        home_share = os.path.abspath(os.path.expanduser(home_share))
+
+        # ensure the home share exists and is under the user's home directory
+        if not os.path.exists(home_share):
+            logger.warning(f"home share [{home_share}] does not exist, skipping")
+            continue
+
+        if not home_share.startswith(user_home_dir):
+            logger.warning(
+                f"home share [{home_share}] is not under the user's home directory, skipping"
+            )
+            continue
+
+        # mount the home share into the container's home directory
+        home_share_src_abs = os.path.abspath(home_share)
+        home_share_src_rel = os.path.relpath(home_share_src_abs, user_home_dir)
+        home_share_target = os.path.join(CONTAINER_HOME_DIR, home_share_src_rel)
+        podman_create_opts.extend(["-v", f"{home_share_src_abs}:{home_share_target}"])
 
     integration_home_env = get_os_integration_home_env()
     podman_create_opts.extend(["-e", integration_home_env])
