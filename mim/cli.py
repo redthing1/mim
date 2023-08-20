@@ -126,6 +126,12 @@ def create(
         "--home-share",
         help="path to a directory to share with the container.",
     ),
+    port_binds: List[str] = typer.Option(
+        [],
+        "-P",
+        "--port-bind",
+        help="port to bind from the host to the container.",
+    ),
 ):
     if container_name is None:
         container_name = image_name
@@ -184,6 +190,9 @@ def create(
         home_share_src_rel = os.path.relpath(home_share_src_abs, user_home_dir)
         home_share_target = os.path.join(CONTAINER_HOME_DIR, home_share_src_rel)
         podman_create_opts.extend(["-v", f"{home_share_src_abs}:{home_share_target}"])
+
+    for port_bind in port_binds:
+        podman_create_opts.extend(["-p", port_bind])
 
     integration_home_env = get_os_integration_home_env()
     podman_create_opts.extend(["-e", integration_home_env])
