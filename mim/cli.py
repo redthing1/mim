@@ -137,6 +137,11 @@ def create(
         "--host-pid",
         help="share the host's PID namespace with the container.",
     ),
+    privileged: bool = typer.Option(
+        False,
+        "--privileged",
+        help="run the container in privileged mode.",
+    ),
 ):
     if container_name is None:
         container_name = image_name
@@ -163,6 +168,9 @@ def create(
 
     if host_pid:
         podman_create_opts.append("--pid=host")
+
+    if privileged:
+        podman_create_opts.append("--privileged")
 
     for mount in get_os_integration_mounts():
         podman_create_opts.extend(["-v", mount])
