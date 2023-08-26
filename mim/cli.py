@@ -128,7 +128,7 @@ def create(
     ),
     port_binds: List[str] = typer.Option(
         [],
-        "-P",
+        "-p",
         "--port-bind",
         help="port to bind from the host to the container.",
     ),
