@@ -132,6 +132,11 @@ def create(
         "--port-bind",
         help="port to bind from the host to the container.",
     ),
+    host_pid: bool = typer.Option(
+        False,
+        "--host-pid",
+        help="share the host's PID namespace with the container.",
+    ),
 ):
     if container_name is None:
         container_name = image_name
@@ -155,6 +160,9 @@ def create(
         "--label",
         f"mim=1",
     ]
+
+    if host_pid:
+        podman_create_opts.append("--pid=host")
 
     for mount in get_os_integration_mounts():
         podman_create_opts.extend(["-v", mount])
