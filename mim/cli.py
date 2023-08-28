@@ -176,14 +176,24 @@ def create(
         podman_create_opts.extend(["-v", mount])
 
     for mount in get_container_integration_mounts(container_data_dir):
-        mount_source, mount_target = mount.split(":")
-        if not os.path.exists(mount_source):
-            logger.warning(
-                f"integration mount source [{mount_source}] does not exist, skipping"
-            )
-            continue
+        # mount_source, mount_target = mount.split(":")
+        # if not os.path.exists(mount.source_path):
+        #     logger.warn(
+        #         f"integration mount source [{mount.source_path}] does not exist, skipping"
+        #     )
+        #     continue
 
-        podman_create_opts.extend(["-v", mount])
+        if mount.is_file:
+            # if the source is a file, but doesn't exist, create an empty file
+            if not os.path.exists(mount.source_path):
+                logger.trace(
+                    f"integration mount source [{mount.source_path}] does not exist, creating empty file"
+                )
+                open(mount.source_path, "a").close()
+                # change permissions to 777 so the container can write to it
+                os.chmod(mount.source_path, 0o777)
+
+        podman_create_opts.extend(["-v", f"{mount.source_path}:{mount.container_path}"])
 
     user_home_dir = get_home_dir()
     for home_share in home_shares:

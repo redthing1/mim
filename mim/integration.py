@@ -1,5 +1,6 @@
 import os
 from typing import List
+from dataclasses import dataclass
 
 # docker mounts from each host system to the container
 
@@ -18,9 +19,16 @@ WINDOWS_MOUNTS = [
     f"C:\\Users:{MOUNT_BASE}\\Users",
 ]
 
+@dataclass
+class ContainerIntegrationMount:
+    source_path: str
+    container_path: str
+    is_file: bool
+
 CONTAINER_INTEGRATION_MOUNTS = [
-    # "$/.zsh_history:/root/.zsh_history",
-    # "$/.bash_history:/root/.bash_history",
+    # ContainerIntegrationMount("$/.zsh_history", "$/.zsh_history", True),
+    # ContainerIntegrationMount("$/.zsh_history.new", "$/.zsh_history.new", True),
+    # ContainerIntegrationMount("$/.bash_history", "$/.bash_history", True),
 ]
 
 CONTAINER_HOME_DIR = "/root"
@@ -61,7 +69,14 @@ def get_os_integration_home_env() -> str:
 
 
 def get_container_integration_mounts(data_dir) -> List[str]:
-    return [x.replace("$", data_dir) for x in CONTAINER_INTEGRATION_MOUNTS]
+    return [
+        ContainerIntegrationMount(
+            x.source_path.replace("$", data_dir),
+            x.container_path.replace("$", CONTAINER_HOME_DIR),
+            x.is_file,
+        )
+        for x in CONTAINER_INTEGRATION_MOUNTS
+    ]
 
 
 # get a path to storable data for this app
