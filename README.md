@@ -1,8 +1,15 @@
 
 # mim
 
-well integrated mini machines with rootless podman.
-a minimalist implementation.
+well-integrated **mini-machines**; a portable linux that has all your data dirs mounted. inspired by [distrobox](https://github.com/89luca89/distrobox) and powered by podman.
+
+## what it's about
+
+sometimes, i want a linux terminal development environment on macos, and i want all my data magically linked in. so that i can cd to a source directory and seamlessly build it.
+
+with the power of containers, we can do just that. we run a linux userspace of our choice (fully customizable by a dockerfile), and mount in all our directories.
+
+mim makes the above super easy. just build a machine image, create a container, then run `mim shell` and you're in!
 
 ## setup
 
