@@ -31,7 +31,7 @@ from .integration import (
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
-APP_NAME = "mim"
+APP_NAME = "mimchine"
 app = typer.Typer(
     name=APP_NAME,
     help=f"{APP_NAME}: integrated mini machines",

@@ -141,14 +141,14 @@ files = [
 
 [[package]]
 name = "single-source"
-version = "0.3.0"
+version = "0.4.0"
 description = "Access to the project version in Python code for PEP 621-style projects"
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = "<4.0,>=3.8"
 groups = ["main"]
 files = [
-    {file = "single-source-0.3.0.tar.gz", hash = "sha256:b12705af958ca99d56ea9ce40bd9cc749378f4fe7ad03b1f9067e29daceef27d"},
-    {file = "single_source-0.3.0-py3-none-any.whl", hash = "sha256:7bc87168ced50f638b6ab0cda4cc1ce9e80ee0e1220014397050d336d021a597"},
+    {file = "single_source-0.4.0-py3-none-any.whl", hash = "sha256:38880b16e6e0ca2e012f85dc3820eb31999ace5f1d9a588395ea38f8bd0775f5"},
+    {file = "single_source-0.4.0.tar.gz", hash = "sha256:7917aa113bda60072f01952e2966cd7247f0ec16fe52a1555f3c066b553e98b4"},
 ]
 
 [[package]]
@@ -184,4 +184,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4.0"
-content-hash = "93822c6012eae39081ce91a4d335b013220bf9b90e84c96929f2c78d12f37bab"
+content-hash = "742aac156e57a463c8570f84a7d5478ec9c705010fda97390f65a45fa397e684"
